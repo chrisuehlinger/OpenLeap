@@ -25,14 +25,14 @@ do
    end
 
    local function to_c_byte_array(bytes)
-      return "(unsigned char[]){ 0x" .. table.concat( split( tostring( bytes ), ":") , ", 0x") .. " }"
+      return "(unsigned char[]){ 0x" .. table.concat( split( tostring( bytes or 0 ), ":") , ", 0x") .. " }"
    end
 
    local function init_listener()
 
-      local ctrl_out_tap = Listener.new("usb", "usb.device_address == " .. DEVICE_ADDRESS .. " and usb.transfer_type == 0x02 and usb.endpoint_number.direction == 0 and usb.setup.bRequest == 1")
+      local ctrl_out_tap = Listener.new("usb", "usb.device_address == " .. DEVICE_ADDRESS .. " and usb.transfer_type == 0x02 and usb.setup.bRequest == 0")
 
-      local ctrl_in_tap = Listener.new("usb", "usb.device_address == " .. DEVICE_ADDRESS .. " and usb.transfer_type == 0x02 and usb.endpoint_number.direction == 1 and usb.setup.bRequest == 129")
+      local ctrl_in_tap = Listener.new("usb", "usb.device_address == " .. DEVICE_ADDRESS .. " and usb.transfer_type == 0x02 and usb.setup.bRequest == 192")
 
       local usb_bmRequestType  = Field.new("usb.bmRequestType")
       local usb_setup_bRequest = Field.new("usb.setup.bRequest")
@@ -48,11 +48,11 @@ do
          code_string = code_string .. tostring( usb_bmRequestType() ) .. ", "
          code_string = code_string .. tostring( usb_setup_bRequest() ) .. ", "
          code_string = code_string .. tostring( usb_setup_wValue() ) .. ", "
-         code_string = code_string .. tostring( usb_setup_wIndex() ) .. ", "
+         code_string = code_string .. tostring( usb_setup_wIndex() or 0 ) .. ", "
          code_string = code_string .. to_c_byte_array( usb_capdata() ) .. ", "
-         code_string = code_string .. #usb_capdata() .. ", "
+         code_string = code_string .. #(usb_capdata() or "")  .. ", "
          code_string = code_string .. "1000);"
-         code_string = code_string .. "\n  if (ret != " .. #usb_capdata() .. ") {\n    printf(\"strl out: ret == %i\\n\", ret);\n  }\n"
+         code_string = code_string .. "\n  if (ret != " .. #(usb_capdata() or "") .. ") {\n    debug_printf(\"strl out: ret == %i\\n\", ret);\n  }\n"
 
          print(code_string)
 
@@ -68,8 +68,8 @@ do
          code_string = code_string .. "data, "
          code_string = code_string .. tostring( usb_setup_wLength() ) .. ", "
          code_string = code_string .. "1000);"
-         code_string = code_string .. "\n  fprintf_data(stdout, \"ctrl in:\", data, " .. tostring( usb_setup_wLength() ) .. ");\n"
-         code_string = code_string .. "\n  if (ret != " .. tostring( usb_setup_wLength() ) .. ") {\n    printf(\"ctrl in: ret == %i\\n\", ret);\n  }\n"
+         code_string = code_string .. "\n  fprintf_data(stderr, \"ctrl in:\", data, " .. tostring( usb_setup_wLength() ) .. ");\n"
+         code_string = code_string .. "\n  if (ret != " .. tostring( usb_setup_wLength() ) .. ") {\n    debug_printf(\"ctrl in: ret == %i\\n\", ret);\n  }\n"
 
          print(code_string)
 

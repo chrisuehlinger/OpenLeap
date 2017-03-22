@@ -10,11 +10,11 @@
 
 #include <libusb.h>
 
-#ifdef NDEBUG
-#define debug_printf(...)
-#else
+//#ifdef NDEBUG
+//#define debug_printf(...)
+//#else
 #define debug_printf(...) fprintf(stderr, __VA_ARGS__)
-#endif
+//#endif
 
 typedef struct ctx_s ctx_t;
 struct ctx_s
@@ -102,8 +102,9 @@ main(int argc, char *argv[])
   leap_init(ctx);
 
   debug_printf( "max %i\n",  libusb_get_max_packet_size(libusb_get_device( ctx->dev_handle ), 0x83));
-
-  for ( ; ; ) {
+  
+  for (int i = 0 ; ; i++) {
+    debug_printf("frame: %d\n", i);
     unsigned char data[16384];
     int transferred;
     ret = libusb_bulk_transfer(ctx->dev_handle, 0x83, data, sizeof(data), &transferred, 1000);
@@ -111,11 +112,11 @@ main(int argc, char *argv[])
       printf("libusb_bulk_transfer(): %i: %s\n", ret, libusb_error_name(ret));
       exit(EXIT_FAILURE);
     }
-
     debug_printf("read usb frame of %i bytes\n", transferred);
-
+      
     fwrite(&transferred, sizeof (transferred), 1, stdout);
     fwrite(data, transferred, 1, stdout);
+      
   }
 
   libusb_exit(ctx->libusb_ctx);

@@ -116,33 +116,46 @@ process_usb_frame(ctx_t *ctx, frame_t *frame, unsigned char *data, int size)
 int
 main(int argc, char *argv[])
 {
+  fprintf(stderr,"1");
   ctx_t ctx_data;
-
+  fprintf(stderr,"2");
   memset(&ctx_data, 0, sizeof (ctx_data));
-
+  fprintf(stderr,"3");
   ctx_t *ctx = &ctx_data;
 
   cvNamedWindow("mainWin", 0);
+  fprintf(stderr, "4");
   cvResizeWindow("mainWin", VFRAME_WIDTH, VFRAME_HEIGHT * 2);
+  fprintf(stderr, "5");
 
   frame_t frame;
   memset(&frame, 0, sizeof (frame));
   frame.frame = cvCreateImage( cvSize(VFRAME_WIDTH, 2 * VFRAME_HEIGHT), IPL_DEPTH_8U, 3);
+  fprintf(stderr, "6");
 
-  for ( ; ; ) {
+  for (int i = 0; ; i++) {
+    
+    fprintf(stderr, "\nframe: %d\n", i);
     unsigned char data[16384];
     int usb_frame_size;
+    //fprintf(stderr, "Post-declaration\n");
 
     if ( feof(stdin) || ctx->quit )
       break ;
 
-    fread(&usb_frame_size, sizeof (usb_frame_size), 1, stdin);
-    fread(data, usb_frame_size, 1, stdin);
+    //fprintf(stderr, "Post-guard\n");
 
+    fread(&usb_frame_size, sizeof (usb_frame_size), 1, stdin);
+    fprintf(stderr, "Post-First Read: %d\n", usb_frame_size);
+    fread(data, usb_frame_size, 1, stdin);
+    //fprintf(stderr, "Post-Second Read\n");
     process_usb_frame(ctx, &frame, data, usb_frame_size);
+    //fprintf(stderr, "Post-Process\n");
   }
+  fprintf(stderr, "\npre-release");
 
   cvReleaseImage(&frame.frame);
+  fprintf(stderr, "\nend");
 
   return (0);
 }
