@@ -67,7 +67,7 @@ process_usb_frame(ctx_t *ctx, frame_t *frame, unsigned char *data, int size)
   int bmHeaderInfo = data[1];
 
   uint32_t dwPresentationTime = *( (uint32_t *) &data[2] );
-  //printf("frame time: %u\n", dwPresentationTime);
+  fprintf(stderr, "frame time: %u\n", dwPresentationTime);
 
   if (frame->id == 0)
     frame->id = dwPresentationTime;
@@ -76,22 +76,30 @@ process_usb_frame(ctx_t *ctx, frame_t *frame, unsigned char *data, int size)
     if (frame->data_len >= VFRAME_SIZE)
       break ;
 
-    CvScalar s;
-    s.val[2] = data[i];
-    s.val[1] = data[i+1];
-    s.val[0] = 0;
-    int x = frame->data_len % VFRAME_WIDTH;
+    CvScalar sLeft;
+    sLeft.val[2] = data[i];
+    sLeft.val[1] = data[i];
+    sLeft.val[0] = data[i];
+    int xLeft = frame->data_len % VFRAME_WIDTH;
     int y = frame->data_len / VFRAME_WIDTH;
-    cvSet2D(frame->frame, 2 * y,     x, s);
-    cvSet2D(frame->frame, 2 * y + 1, x, s);
+    cvSet2D(frame->frame, 2 * y,     xLeft, sLeft);
+    cvSet2D(frame->frame, 2 * y + 1, xLeft, sLeft);
+    
+    CvScalar sRight;
+    sRight.val[2] = data[i+1];
+    sRight.val[1] = data[i+1];
+    sRight.val[0] = data[i+1];
+    int xRight = VFRAME_WIDTH + frame->data_len % VFRAME_WIDTH;
+    cvSet2D(frame->frame, 2 * y,     xRight, sRight);
+    cvSet2D(frame->frame, 2 * y + 1, xRight, sRight);
     frame->data_len++;
   }
 
   if (bmHeaderInfo & UVC_STREAM_EOF) {
-    //printf("End-of-Frame.  Got %i\n", frame->data_len);
+    fprintf(stderr, "End-of-Frame.  Got %i\n", frame->data_len);
 
     if (frame->data_len != VFRAME_SIZE) {
-      //printf("wrong frame size got %i expected %i\n", frame->data_len, VFRAME_SIZE);
+      fprintf(stderr, "wrong frame size got %i expected %i\n", frame->data_len, VFRAME_SIZE);
       frame->data_len = 0;
       frame->id = 0;
       return ;
@@ -103,7 +111,7 @@ process_usb_frame(ctx_t *ctx, frame_t *frame, unsigned char *data, int size)
   }
   else {
     if (dwPresentationTime != frame->id && frame->id > 0) {
-      //printf("mixed frame TS: dropping frame\n");
+      fprintf(stderr,"mixed frame TS: dropping frame\n");
       frame->id = dwPresentationTime;
       /* frame->data_len = 0; */
       /* frame->id = 0; */
@@ -125,12 +133,12 @@ main(int argc, char *argv[])
 
   cvNamedWindow("mainWin", 0);
   fprintf(stderr, "4");
-  cvResizeWindow("mainWin", VFRAME_WIDTH, VFRAME_HEIGHT * 2);
+  cvResizeWindow("mainWin", VFRAME_WIDTH*2, VFRAME_HEIGHT * 2);
   fprintf(stderr, "5");
 
   frame_t frame;
   memset(&frame, 0, sizeof (frame));
-  frame.frame = cvCreateImage( cvSize(VFRAME_WIDTH, 2 * VFRAME_HEIGHT), IPL_DEPTH_8U, 3);
+  frame.frame = cvCreateImage( cvSize(2*VFRAME_WIDTH, 2 * VFRAME_HEIGHT), IPL_DEPTH_8U, 3);
   fprintf(stderr, "6");
 
   for (int i = 0; ; i++) {
