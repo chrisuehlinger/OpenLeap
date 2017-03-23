@@ -109,7 +109,7 @@ main(int argc, char *argv[])
     int transferred;
     ret = libusb_bulk_transfer(ctx->dev_handle, 0x83, data, sizeof(data), &transferred, 1000);
     if (ret != 0) {
-      printf("libusb_bulk_transfer(): %i: %s\n", ret, libusb_error_name(ret));
+      debug_printf("libusb_bulk_transfer(): %i: %s\n", ret, libusb_error_name(ret));
       exit(EXIT_FAILURE);
     }
     debug_printf("read usb frame of %i bytes\n", transferred);
