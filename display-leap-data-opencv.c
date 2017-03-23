@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <cv.h>
 #include <highgui.h>
@@ -72,6 +73,7 @@ process_usb_frame(ctx_t *ctx, frame_t *frame, unsigned char *data, int size)
   if (frame->id == 0)
     frame->id = dwPresentationTime;
 
+  
   for (i = bHeaderLen; i < size ; i += 2) {
     if (frame->data_len >= VFRAME_SIZE)
       break ;
@@ -159,6 +161,8 @@ main(int argc, char *argv[])
     //fprintf(stderr, "Post-Second Read\n");
     process_usb_frame(ctx, &frame, data, usb_frame_size);
     //fprintf(stderr, "Post-Process\n");
+
+    usleep(1000);
   }
   fprintf(stderr, "\npre-release");
 
